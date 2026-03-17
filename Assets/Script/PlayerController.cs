@@ -3,7 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using UnityEngine.InputSystem;
-using System.Reflection;
+using UnityEngine.SceneManagement;
+
 
 
 
@@ -16,6 +17,7 @@ public class PlayerControl : MonoBehaviour
     float jumpforce = 680.0f;
     float walkforce = 30.0f;
     float maxwalkspeed = 2.0f;
+    float threshold = 0.2f;
     void Start()
     {
         Application.targetFrameRate = 60;
@@ -26,8 +28,9 @@ public class PlayerControl : MonoBehaviour
     
     void Update()
     {
-        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        if (Keyboard.current.spaceKey.wasPressedThisFrame ==true && this.rigid2D.linearVelocity.y == 0)
         {
+            this.animator.SetTrigger("JumpTrigger");
             this.rigid2D.AddForce(transform.up * this.jumpforce);
         }
 
@@ -46,6 +49,36 @@ public class PlayerControl : MonoBehaviour
         {
             transform.localScale = new Vector3(key, 1, 1);
         }
-        this.animator.speed = speedx / 2.0f;
+
+
+        if (speedx < this.threshold)
+        {
+            // 停止時將動畫重置回第 0 幀（原始姿勢）
+            this.animator.Play(this.animator.GetCurrentAnimatorStateInfo(0).shortNameHash, 0, 0f);
+            this.animator.speed = 0;
+        }
+        else
+        {
+            if(this.rigid2D.linearVelocity.y == 0)
+            {
+                this.animator.speed = speedx / 2.0f; // 根據速度調整動畫播放速度
+            }
+            else
+            {
+                this.animator.speed = 1.0f; // 跳躍時保持正常動畫速度
+            }
+        }
+
+
+        if(transform.position.y < -10)
+        {
+            SceneManager.LoadScene("GameScene");
+        }
+        
     }
+    void OnTriggerEnter2D(Collider2D other)
+        {
+            Debug.Log("終點");
+            SceneManager.LoadScene("ClearScene");
+        }
 }
